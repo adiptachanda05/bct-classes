@@ -1,0 +1,15 @@
+body{
+    font-family:Arial,sans-serif;
+    margin: 0;
+    padding:0;
+    background-color: aliceblue;
+
+
+    hi{
+        color:aqua;
+        text-align:center;
+        padding: 20px;
+
+    }
+    
+}
