@@ -1,0 +1,332 @@
+{% extends 'website/layout.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - Product Details{% endblock %}
+
+{% block content %}
+<style>
+    .product-container {
+        max-width: 900px;
+        margin: 40px auto;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .product-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .product-header h1 {
+        color: white;
+        margin: 0;
+        font-size: 2.5em;
+    }
+
+    .product-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        padding: 40px;
+        align-items: start;
+    }
+
+    .product-image {
+        text-align: center;
+    }
+
+    .product-image img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .product-details {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .price-section {
+        background-color: #f0f4ff;
+        padding: 20px;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+    }
+
+    .price {
+        font-size: 2em;
+        font-weight: bold;
+        color: #667eea;
+        margin: 0;
+    }
+
+    .currency {
+        font-size: 0.7em;
+        color: #666;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.9em;
+        width: fit-content;
+    }
+
+    .status-available {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-unavailable {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .status-out-of-stock {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .status-discontinued {
+        background-color: #e2e3e5;
+        color: #383d41;
+        border: 1px solid #d6d8db;
+    }
+
+    .description-section {
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        line-height: 1.6;
+        color: #333;
+    }
+
+    .description-section h3 {
+        margin-top: 0;
+        color: #667eea;
+    }
+
+    .description-section p {
+        margin: 0;
+    }
+
+    .meta-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .meta-item {
+        background-color: #f9f9f9;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 3px solid #667eea;
+    }
+
+    .meta-label {
+        font-weight: bold;
+        color: #667eea;
+        font-size: 0.9em;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+
+    .meta-value {
+        color: #333;
+        font-size: 1em;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .btn {
+        flex: 1;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 1em;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background-color: #667eea;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #5568d3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+        background-color: #e9ecef;
+        color: #333;
+        border: 2px solid #667eea;
+    }
+
+    .btn-secondary:hover {
+        background-color: #667eea;
+        color: white;
+    }
+
+    .product-specs {
+        background-color: #f0f4ff;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+    }
+
+    .product-specs h3 {
+        color: #667eea;
+        margin-top: 0;
+    }
+
+    .specs-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .spec-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .spec-icon {
+        font-size: 1.5em;
+    }
+
+    .spec-text {
+        font-size: 0.95em;
+        color: #333;
+    }
+
+    @media (max-width: 768px) {
+        .product-content {
+            grid-template-columns: 1fr;
+            padding: 20px;
+        }
+
+        .meta-info {
+            grid-template-columns: 1fr;
+        }
+
+        .product-header h1 {
+            font-size: 1.8em;
+        }
+
+        .price {
+            font-size: 1.5em;
+        }
+    }
+</style>
+
+<div class="product-container">
+    <!-- Product Header -->
+    <div class="product-header">
+        <h1>{{ product.name }}</h1>
+    </div>
+
+    <!-- Product Content -->
+    <div class="product-content">
+        <!-- Product Image -->
+        <div class="product-image">
+            {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}">
+            {% else %}
+                <img src="https://via.placeholder.com/400x300?text=No+Image" alt="No product image">
+            {% endif %}
+        </div>
+
+        <!-- Product Details -->
+        <div class="product-details">
+            <!-- Price Section -->
+            <div class="price-section">
+                <p class="price">
+                    <span class="currency">$</span>{{ product.price }}
+                </p>
+            </div>
+
+            <!-- Status Badge -->
+            <div>
+                <span class="status-badge status-{{ product.status }}">
+                    {{ product.get_status_display }}
+                </span>
+            </div>
+
+            <!-- Description -->
+            <div class="description-section">
+                <h3>Description</h3>
+                <p>{{ product.description }}</p>
+            </div>
+
+            <!-- Meta Information -->
+            <div class="meta-info">
+                <div class="meta-item">
+                    <div class="meta-label">Product ID</div>
+                    <div class="meta-value">#{{ product.id }}</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">Added On</div>
+                    <div class="meta-value">{{ product.created_at|date:"M d, Y" }}</div>
+                </div>
+            </div>
+
+            <!-- Product Specifications (Laptop Specific) -->
+            <div class="product-specs">
+                <h3>Quick Specs</h3>
+                <div class="specs-grid">
+                    <div class="spec-item">
+                        <span class="spec-icon">💻</span>
+                        <span class="spec-text">High Performance</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-icon">⚡</span>
+                        <span class="spec-text">Fast Processor</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-icon">🎮</span>
+                        <span class="spec-text">Dedicated GPU</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-icon">📱</span>
+                        <span class="spec-text">Portability</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-icon">🔋</span>
+                        <span class="spec-text">Long Battery Life</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-icon">❄️</span>
+                        <span class="spec-text">Advanced Cooling</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-primary">Add to Cart</button>
+                <button class="btn btn-secondary">View More</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
