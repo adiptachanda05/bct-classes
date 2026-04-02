@@ -1,0 +1,40 @@
+{% extends 'website/layout.html' %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+    <h1>Welcome to Django Website</h1>
+    <p>This is a simple Django website.</p>
+    
+    <div class="products-container">
+        <h2>Our Products</h2>
+        <table class="products-table">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Description</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if products %}
+                    {% for product in products %}
+                    <tr>
+                        <td>{{ product.name }}</td>
+                        <td>${{ product.price }}</td>
+                        <td><span class="status-{{ product.status }}">{{ product.get_status_display }}</span></td>
+                        <td>{{ product.description|truncatewords:10 }}</td>
+                        <td>{{ product.created_at|date:"Y-m-d" }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="no-products">No products available</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
