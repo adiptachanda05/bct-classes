@@ -1,0 +1,734 @@
+{% extends 'website/layout.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - Product Details{% endblock %}
+
+{% block content %}
+<style>
+    .product-container {
+        max-width: 900px;
+        margin: 40px auto;
+        background: linear-gradient(120deg, #f0f4ff 0%, #f9f9f9 100%);
+        border-radius: 18px;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.18), 0 1.5px 8px rgba(0,0,0,0.08);
+        overflow: visible;
+        position: relative;
+        animation: fadeInCard 0.8s cubic-bezier(.4,0,.2,1);
+    }
+
+    @keyframes fadeInCard {
+        from { opacity: 0; transform: translateY(40px) scale(0.98); }
+        to { opacity: 1; transform: none; }
+    }
+
+    .floating-badge {
+        position: absolute;
+        top: -18px;
+        right: 24px;
+        background: linear-gradient(90deg, #ffb347 0%, #ffcc33 100%);
+        color: #fff;
+        font-weight: bold;
+        padding: 8px 22px;
+        border-radius: 30px;
+        box-shadow: 0 2px 8px rgba(255, 195, 0, 0.18);
+        font-size: 1.1em;
+        letter-spacing: 1px;
+        z-index: 2;
+        animation: popBadge 0.7s cubic-bezier(.4,0,.2,1);
+    }
+    @keyframes popBadge {
+        0% { transform: scale(0.7); opacity: 0; }
+        80% { transform: scale(1.1); opacity: 1; }
+        100% { transform: scale(1); }
+    }
+
+    .product-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .product-header h1 {
+        color: white;
+        margin: 0;
+        font-size: 2.5em;
+    }
+
+    .product-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        padding: 40px;
+        align-items: start;
+    }
+
+    .product-image {
+        text-align: center;
+    }
+
+    .product-image img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .product-details {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* VALIDATION ALERTS STYLES */
+    .validation-alert {
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        border-left: 4px solid;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 0.95em;
+        line-height: 1.5;
+    }
+
+    .alert-warning {
+        background-color: #fff3cd;
+        border-color: #ffc107;
+        color: #856404;
+    }
+
+    .alert-info {
+        background-color: #d1ecf1;
+        border-color: #17a2b8;
+        color: #0c5460;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .alert-icon {
+        font-size: 1.3em;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .alert-text {
+        flex: 1;
+    }
+
+    .price-section {
+        background-color: #f0f4ff;
+        padding: 20px;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+    }
+
+    .price {
+        font-size: 2em;
+        font-weight: bold;
+        color: #667eea;
+        margin: 0;
+    }
+
+    .currency {
+        font-size: 0.7em;
+        color: #666;
+    }
+
+    .info-badge {
+        display: inline-block;
+        background-color: #e7f3ff;
+        color: #1565c0;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 0.85em;
+        font-weight: bold;
+        margin-top: 8px;
+    }
+
+    .price-invalid {
+        color: #dc3545;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.9em;
+        width: fit-content;
+    }
+
+    .status-available {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-unavailable {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .status-out-of-stock {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .status-discontinued {
+        background-color: #e2e3e5;
+        color: #383d41;
+        border: 1px solid #d6d8db;
+    }
+
+    .description-section {
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        line-height: 1.6;
+        color: #333;
+    }
+
+    .description-section h3 {
+        margin-top: 0;
+        color: #667eea;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .description-section p {
+        margin: 0;
+    }
+
+    .meta-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .meta-item {
+        background-color: #f9f9f9;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 3px solid #667eea;
+    }
+
+    .meta-label {
+        font-weight: bold;
+        color: #667eea;
+        font-size: 0.9em;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .meta-value {
+        color: #333;
+        font-size: 1em;
+    }
+
+    .stock-info {
+        background-color: #e7f3ff;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #2196F3;
+        margin: 15px 0;
+    }
+
+    .stock-info strong {
+        color: #1565c0;
+    }
+
+    .stock-info p {
+        margin: 8px 0 0 0;
+        font-size: 0.9em;
+        line-height: 1.6;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .btn {
+        flex: 1;
+        padding: 14px 24px;
+        border: none;
+        border-radius: 7px;
+        font-size: 1.08em;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(.4,0,.2,1);
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.08);
+        outline: none;
+        position: relative;
+        overflow: hidden;
+    }
+    .btn:active {
+        transform: scale(0.97);
+    }
+    .btn-primary {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.13);
+    }
+    .btn-primary:hover:not(:disabled) {
+        background: linear-gradient(90deg, #5568d3 0%, #764ba2 100%);
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.18);
+    }
+    .btn-primary:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .btn-secondary {
+        background: #fff;
+        color: #667eea;
+        border: 2px solid #667eea;
+        font-weight: 600;
+    }
+    .btn-secondary:hover {
+        background: #667eea;
+        color: white;
+        border-color: #5568d3;
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.13);
+    }
+
+    .product-specs {
+        background-color: #f0f4ff;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+    }
+
+    .product-specs h3 {
+        color: #667eea;
+        margin-top: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .specs-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .spec-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .spec-icon {
+        font-size: 1.5em;
+    }
+
+    .spec-text {
+        font-size: 0.95em;
+        color: #333;
+    }
+
+    @media (max-width: 768px) {
+        .product-content {
+            grid-template-columns: 1fr;
+            padding: 20px;
+        }
+
+        .meta-info {
+            grid-template-columns: 1fr;
+        }
+
+        .product-header h1 {
+            font-size: 1.8em;
+        }
+
+        .price {
+            font-size: 1.5em;
+        }
+    }
+</style>
+
+<div class="product-container">
+    <!-- Product Header -->
+    <div class="product-header">
+        <h1>{{ product.name }}</h1>
+    </div>
+
+    <!-- Product Content -->
+    <div class="product-content">
+        <!-- Product Image -->
+        <div class="product-image">
+            {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}">
+            {% else %}
+                <img src="https://via.placeholder.com/400x300?text=No+Image" alt="No product image">
+            {% endif %}
+        </div>
+
+        <!-- Product Details -->
+        <div class="product-details">
+            
+            <!-- VALIDATION #1: Product Name Validation -->
+            {% if not product.name or product.name|length == 0 %}
+                <div class="validation-alert alert-danger">
+                    <span class="alert-icon">❌</span>
+                    <div class="alert-text">
+                        <strong>Invalid Product:</strong> Product name is missing or empty. Please contact support.
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- VALIDATION #2: Description Validation -->
+            {% if not product.description or product.description|length == 0 %}
+                <div class="validation-alert alert-warning">
+                    <span class="alert-icon">⚠️</span>
+                    <div class="alert-text">
+                        <strong>Limited Information:</strong> Complete product description is not available. Contact support for more details.
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- VALIDATION #3: Stock/Availability Status Validation -->
+            {% if product.status == 'out_of_stock' %}
+                <div class="validation-alert alert-warning">
+                    <span class="alert-icon">📢</span>
+                    <div class="alert-text">
+                        <strong>Out of Stock:</strong> This product is currently unavailable. Please check back later or notify us for restock notifications.
+                    </div>
+                </div>
+            {% elif product.status == 'discontinued' %}
+                <div class="validation-alert alert-danger">
+                    <span class="alert-icon">🛑</span>
+                    <div class="alert-text">
+                        <strong>Discontinued:</strong> This product is no longer available for purchase. Check our similar products instead.
+                    </div>
+                </div>
+            {% elif product.status == 'unavailable' %}
+                <div class="validation-alert alert-danger">
+                    <span class="alert-icon">❌</span>
+                    <div class="alert-text">
+                        <strong>Unavailable:</strong> This product is temporarily unavailable. Please try again later.
+                    </div>
+                </div>
+            {% elif product.status == 'available' %}
+                <div class="validation-alert alert-success">
+                    <span class="alert-icon">✅</span>
+                    <div class="alert-text">
+                        <strong>In Stock:</strong> This product is available for immediate purchase!
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- VALIDATION #4: Price Validation -->
+            <div class="price-section">
+                {% if product.price and product.price > 0 %}
+                    <p class="price">
+                        <span class="currency">$</span>{{ product.price|floatformat:2 }}
+                    </p>
+                    <span class="info-badge">✓ Verified Price</span>
+                {% elif product.price == 0 %}
+                    <p class="price price-invalid">⚠️ Price Not Set</p>
+                    <span class="info-badge" style="background-color: #fff3cd; color: #856404;">Contact for pricing</span>
+                {% else %}
+                    <p class="price price-invalid">❌ Invalid Price</p>
+                    <span class="info-badge" style="background-color: #f8d7da; color: #721c24;">Price information unavailable</span>
+                {% endif %}
+            </div>
+
+            <!-- VALIDATION #5: Status Badge with Proper Styling -->
+            <div>
+                {% if product.status %}
+                    <span class="status-badge status-{{ product.status }}">
+                        {{ product.get_status_display }} • {% if product.status == 'available' %}Ready to Ship{% else %}{{ product.status|title }}{% endif %}
+                    </span>
+                {% else %}
+                    <span class="status-badge" style="background-color: #e2e3e5; color: #383d41;">Status Unknown</span>
+                {% endif %}
+            </div>
+
+            <!-- Description Section -->
+            <div class="description-section">
+                <h3>📝 Description</h3>
+                {% if product.description and product.description|length > 0 %}
+                    <p>{{ product.description }}</p>
+                {% else %}
+                    <p style="font-style: italic; color: #999;">No description provided for this product. Please contact customer support for more information.</p>
+                {% endif %}
+            </div>
+
+            <!-- VALIDATION #6 & #7: Meta Information with Fallback Values -->
+            <div class="meta-info">
+                <div class="meta-item">
+                    <div class="meta-label">🏷️ Product ID</div>
+                    <div class="meta-value">
+                        {% if product.id %}
+                            #{{ product.id }}
+                        {% else %}
+                            <span style="color: #999; font-style: italic;">Not assigned</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">📅 Added On</div>
+                    <div class="meta-value">
+                        {% if product.created_at %}
+                            {{ product.created_at|date:"M d, Y" }}
+                        {% else %}
+                            <span style="color: #999; font-style: italic;">Information not available</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">📦 Category</div>
+                    <div class="meta-value">
+                        {% if product.category %}
+                            {{ product.category }}
+                        {% else %}
+                            <span style="color: #999; font-style: italic;">Uncategorized</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-label">📊 Status</div>
+                    <div class="meta-value">
+                        {{ product.get_status_display }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- VALIDATION #8: Stock Information -->
+            {% if product.status == 'available' %}
+                <div class="stock-info">
+                    <strong>✓ Ready to Purchase</strong>
+                    <p>
+                        ✓ In Stock<br>
+                        ✓ Fast Shipping Available<br>
+                        ✓ 30-Day Return Policy<br>
+                        ✓ Secure Payment
+                    </p>
+                </div>
+            {% elif product.status == 'out_of_stock' %}
+                <div class="stock-info" style="background-color: #fff3cd; border-color: #ffc107; color: #856404;">
+                    <strong>⏳ Currently Out of Stock</strong>
+                    <p>
+                        • Expected restock date will be announced soon<br>
+                        • Sign up for notifications<br>
+                        • Check similar products
+                    </p>
+                </div>
+            {% elif product.status == 'discontinued' %}
+                <div class="stock-info" style="background-color: #f8d7da; border-color: #f5c6cb; color: #721c24;">
+                    <strong>🛑 Product Discontinued</strong>
+                    <p>
+                        • This product is no longer available<br>
+                        • Browse alternative products<br>
+                        • Contact support for recommendations
+                    </p>
+                </div>
+            {% endif %}
+
+            <!-- Product Specifications - VALIDATION #9 & #10 -->
+            <div class="product-specs">
+                <h3>ℹ️ Product Information</h3>
+                <div class="specs-grid">
+                    <!-- Category -->
+                    {% if product.category %}
+                        <div class="spec-item">
+                            <span class="spec-icon">📦</span>
+                            <span class="spec-text"><strong>Category:</strong> {{ product.category }}</span>
+                        </div>
+                    {% else %}
+                        <div class="spec-item">
+                            <span class="spec-icon">❓</span>
+                            <span class="spec-text"><strong>Category:</strong> Not specified</span>
+                        </div>
+                    {% endif %}
+
+                    <!-- Availability Status -->
+                    <div class="spec-item">
+                        <span class="spec-icon">
+                            {% if product.status == 'available' %}✅{% else %}❌{% endif %}
+                        </span>
+                        <span class="spec-text">
+                            <strong>Availability:</strong> 
+                            {% if product.status == 'available' %}In Stock{% else %}{{ product.get_status_display }}{% endif %}
+                        </span>
+                    </div>
+
+                    <!-- Price Display -->
+                    <div class="spec-item">
+                        <span class="spec-icon">💰</span>
+                        <span class="spec-text">
+                            <strong>Price:</strong> 
+                            {% if product.price and product.price > 0 %}
+                                ${{ product.price|floatformat:2 }}
+                            {% else %}
+                                Contact for pricing
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <!-- Verified Badge -->
+                    <div class="spec-item">
+                        <span class="spec-icon">🔐</span>
+                        <span class="spec-text"><strong>Verified:</strong> Authentic Product</span>
+                    </div>
+
+                    <!-- Product SKU -->
+                    <div class="spec-item">
+                        <span class="spec-icon">🔑</span>
+                        <span class="spec-text">
+                            <strong>SKU:</strong> 
+                            {% if product.id %}
+                                {{ product.id }}
+                            {% else %}
+                                Not available
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <!-- Support -->
+                    <div class="spec-item">
+                        <span class="spec-icon">🛡️</span>
+                        <span class="spec-text"><strong>Support:</strong> 24/7 Customer Service</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Specs (Dynamic based on product) -->
+            {% if product.specifications %}
+                <div class="product-specs">
+                    <h3>⚡ Specifications</h3>
+                    <div class="specs-grid">
+                        {% for spec in product.specifications %}
+                            <div class="spec-item">
+                                <span class="spec-icon">{{ spec.icon }}</span>
+                                <span class="spec-text"><strong>{{ spec.label }}:</strong> {{ spec.value }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="product-specs">
+                    <h3>⚡ Specifications</h3>
+                    <div class="specs-grid">
+                        <div class="spec-item">
+                            <span class="spec-icon">ℹ️</span>
+                            <span class="spec-text">No specifications available for this product.</span>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Modal for View More Details -->
+            <div id="viewMoreModal" class="modal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.35);align-items:center;justify-content:center;">
+                <div style="background:#fff;max-width:480px;width:90vw;padding:32px 24px 24px 24px;border-radius:18px;box-shadow:0 8px 32px rgba(102,126,234,0.18);position:relative;animation:fadeInCard 0.5s;">
+                    <button onclick="closeModal()" style="position:absolute;top:12px;right:18px;background:none;border:none;font-size:1.6em;color:#667eea;cursor:pointer;">&times;</button>
+                    <h2 style="color:#667eea;margin-top:0;margin-bottom:18px;font-size:1.4em;">More Details</h2>
+                    <div style="color:#333;font-size:1.08em;line-height:1.7;">
+                        <strong>Description:</strong> {{ product.description|default:'No description.' }}<br><br>
+                        <strong>Created At:</strong> {{ product.created_at|date:"M d, Y H:i" }}<br>
+                        <strong>Status:</strong> {{ product.get_status_display }}<br>
+                        <strong>Price:</strong> {% if product.price and product.price > 0 %}${{ product.price|floatformat:2 }}{% else %}Contact for pricing{% endif %}<br>
+                        <strong>Category:</strong> {{ product.category|default:'Uncategorized' }}<br>
+                        <br>
+                        <strong>Specifications:</strong>
+                        <ul style="margin:0 0 0 18px;padding:0;">
+                        {% if product.specifications %}
+                            {% for spec in product.specifications %}
+                                <li>{{ spec.icon }} <b>{{ spec.label }}</b>: {{ spec.value }}</li>
+                            {% endfor %}
+                        {% else %}
+                            <li>No specifications available.</li>
+                        {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                {% if product.status == 'available' and product.price and product.price > 0 %}
+                    <button class="btn btn-primary" onclick="addToCart({{ product.id }})">
+                        <span style="font-size:1.2em;vertical-align:middle;">🛒</span> Add to Cart
+                    </button>
+                {% elif product.status == 'available' and not product.price %}
+                    <button class="btn btn-primary" disabled title="Price not set">
+                        <span style="font-size:1.2em;vertical-align:middle;">💬</span> Contact for Price
+                    </button>
+                {% else %}
+                    <button class="btn btn-primary" disabled title="This product is not available for purchase">
+                        <span style="font-size:1.2em;vertical-align:middle;">❌</span> Unavailable
+                    </button>
+                {% endif %}
+                <button class="btn btn-secondary" onclick="viewMoreDetails()">
+                    <span style="font-size:1.2em;vertical-align:middle;">ℹ️</span> View More
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function addToCart(productId) {
+        if (!productId || productId <= 0) {
+            alert('❌ Invalid product ID. Please try again.');
+            console.error('Invalid product ID:', productId);
+            return false;
+        }
+        if (isNaN(productId)) {
+            alert('❌ Product ID must be a number.');
+            return false;
+        }
+        // Button animation
+        const btn = event.target.closest('button');
+        btn.classList.add('btn-success-animate');
+        setTimeout(() => btn.classList.remove('btn-success-animate'), 600);
+        // Log action
+        console.log('✅ Adding product #' + productId + ' to cart');
+        alert('✅ Product added to cart successfully!');
+        return true;
+    }
+
+    function viewMoreDetails() {
+        document.getElementById('viewMoreModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+        document.getElementById('viewMoreModal').style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    // Close modal on background click
+    window.addEventListener('click', function(e) {
+        const modal = document.getElementById('viewMoreModal');
+        if (modal && e.target === modal) closeModal();
+    });
+</script>
+{% if product.specifications %}
+    {% for spec in product.specifications %}
+        {% if spec.label|lower == 'best seller' or spec.value|lower == 'best seller' %}
+            <div class="floating-badge">🌟 Best Seller</div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+{% endblock %}
